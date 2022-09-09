@@ -6,6 +6,16 @@ class VT extends Upload{
     const DATABASE="phpadmin";
     protected static $connection;
     function __construct(){ self::__connect(); }
+    public static $table;
+    public static $select="*";
+    public static $whereRawKey;
+    public static $whereRawVal;
+    public static $whereKey;
+    public static $whereVal=array();
+    public static $orderBy=NULL;
+    public static $limit=NULL;
+    public static $join="";
+    public static $leftJoin="";
 
     public static function __connect(){
         try{
@@ -16,6 +26,124 @@ class VT extends Upload{
             exit();
         }
     }
+
+    public static function table($tableName){
+        self::$table=$tableName;
+        self::$select="*";
+        self::$whereRawKey=NULL;
+        self::$whereRawVal=NULL;
+        self::$whereKey=NULL;
+        self::$whereVal=array();
+        self::$orderBy=NULL;
+        self::$limit=NULL;
+        self::$join="";
+        self::$leftJoin="";
+        return new self;
+    }
+
+    public static function select($colums){
+        self::$select=(is_array($colums)) ? implode(",",$colums) : $colums ;
+        return new self;
+    }
+
+    public static function whereRaw($whereRaw,$whereRawVal){
+        self::$whereRawKey="(".$whereRaw.")";
+        self::$whereRawVal=$whereRawVal;
+        return new self;
+    }
+
+    public static function where($colums1,$colums2=NULL,$colums3=NULL){
+        if(is_array($colums1)!=false){
+            $keyList=array();
+            foreach($colums1 as $key=>$item){
+                self::$whereVal[]=$item;
+                $keyList[]=$key;
+            }
+            self::$whereKey=implode("=? AND ",$keyList)."=?";
+        }
+        else if($colums2!=NULL && $colums3==NULL){
+            self::$whereVal[]=$colums2;
+            self::$whereKey=$colums1."=?";
+        }
+        else if($colums3!=NULL){
+            self::$whereVal[]=$colums3;
+            self::$whereKey=$colums1.$colums2."?";
+        }
+        return new self;
+    }
+
+    public static function orderBy($parameter){
+        self::$orderBy=$parameter[0]." ".((!empty($parameter[1])) ? $parameter[1] : "ASC");
+        return new self;
+    }
+
+    public static function limit($start,$end=NULL){
+        self::$limit=$start.(($end!=NULL) ? ",".$end : "");
+        return new self;
+    }
+    public static function join($tableName,$thisColums,$joinColums){
+        self::$join.="INNER JOIN ".$tableName." ON ".self::$table.".".$thisColums."=.".$tableName.".".$joinColums." ";
+        return new self;
+    }
+    public static function leftJoin($tableName,$thisColums,$joinColums){
+        self::$leftJoin.="LEFT JOIN ".$tableName." ON ".self::$table.".".$thisColums."=.".$tableName.".".$joinColums." ";
+        return new self;
+    }
+
+    public static function get(){
+        $SQL= "SELECT ".self::$select." FROM ".self::$table." ";
+        $SQL.=(!empty(self::$join)) ? self::$join : "" ;
+        $SQL.=(!empty(self::$leftJoin)) ? self::$leftJoin : "" ;
+        $WHERE=NULL;
+        if(!empty(self::$whereKey) && !empty(self::$whereRawKey)){
+            $SQL.="WHERE ".self::$whereKey." AND ".self::$whereRawKey." ";
+            $WHERE=array_merge(self::$whereVal,self::$whereRawVal);
+        }else{
+            if(!empty(self::$whereKey)){
+                $SQL.="WHERE ".self::$whereKey." ";
+                $WHERE=self::$whereVal;
+            }
+            if(!empty(self::$whereRawKey)){
+                $SQL.="WHERE ".self::$whereRawKey." ";
+                $WHERE=self::$whereRawVal;
+            }
+        }
+
+        $SQL.=(!empty(self::$orderBy)) ? "ORDER BY ".self::$orderBy." " : "";
+        $SQL.=(!empty(self::$limit)) ? "LIMIT ".self::$limit : "";
+
+        if($WHERE!=NULL){
+            $Entity=self::$connection->prepare($SQL);
+            $Sync=$Entity->execute($WHERE);
+        }else{
+            $Entity=self::$connection->query($SQL);
+        }
+
+        $Result=$Entity->fetchAll(PDO::FETCH_ASSOC);
+        if($Result!=false){
+            $data=[];
+            foreach($Result as $item){
+                $data[]=(object) $item;
+            }
+
+            if(count($data)>1)
+                return $data;
+            else
+                return $data;
+
+        }else{
+            return false;
+        }
+    }
+    public static function first(){
+        $entity=self::get();
+        if($entity){
+            return $entity[0];
+        }else{
+            return false;
+        }
+    }
+
     public static function view($pagename,$error){
         $fileHref="errors/".$pagename.".php";
         if(file_exists($fileHref))
