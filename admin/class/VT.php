@@ -144,6 +144,72 @@ class VT extends Upload{
         }
     }
 
+    public static function create($arrayColums){
+        $colums=array_keys($arrayColums);
+        $columsVal=array_values($arrayColums);
+        $SQL="INSERT INTO ".self::$table." SET ".implode("=?, ",$colums)."=?";
+        $entity=self::$connection->prepare($SQL);
+        $sync=$entity->execute($columsVal);
+        if($sync!=false)
+            return true;
+        else
+            return false;
+
+    }
+
+    public static function update($arrayColums){
+        $colums=array_keys($arrayColums);
+        $columsVal=array_values($arrayColums);
+        $SQL="UPDATE ".self::$table." SET ".implode("=?, ",$colums)."=? ";
+        $WHERE=NULL;
+        if(!empty(self::$whereKey) && !empty(self::$whereRawKey)){
+            $SQL.="WHERE ".self::$whereKey." AND ".self::$whereRawKey." ";
+            $WHERE=array_merge(self::$whereVal,self::$whereRawVal);
+        }else{
+            if(!empty(self::$whereKey)){
+                $SQL.="WHERE ".self::$whereKey." ";
+                $WHERE=self::$whereVal;
+            }
+            if(!empty(self::$whereRawKey)){
+                $SQL.="WHERE ".self::$whereRawKey." ";
+                $WHERE=self::$whereRawVal;
+            }
+        }
+        if($WHERE!=NULL){
+            $arrayColums=array_merge($columsVal,$WHERE);
+        }
+        $entity=self::$connection->prepare($SQL);
+        $sync=$entity->execute($arrayColums);
+        if($sync!=false)
+            return true;
+        else
+            return false;
+    }
+
+    public static function delete(){
+        $SQL="DELETE FROM ".self::$table." ";
+        $WHERE=NULL;
+        if(!empty(self::$whereKey) && !empty(self::$whereRawKey)){
+            $SQL.="WHERE ".self::$whereKey." AND ".self::$whereRawKey." ";
+            $WHERE=array_merge(self::$whereVal,self::$whereRawVal);
+        }else{
+            if(!empty(self::$whereKey)){
+                $SQL.="WHERE ".self::$whereKey." ";
+                $WHERE=self::$whereVal;
+            }
+            if(!empty(self::$whereRawKey)){
+                $SQL.="WHERE ".self::$whereRawKey." ";
+                $WHERE=self::$whereRawVal;
+            }
+        }
+        $entity=self::$connection->prepare($SQL);
+        $sync=$entity->execute($WHERE);
+        if($sync!=false)
+            return true;
+        else
+            return false;
+    }
+
     public static function view($pagename,$error){
         $fileHref="errors/".$pagename.".php";
         if(file_exists($fileHref))
