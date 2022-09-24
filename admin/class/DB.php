@@ -1,5 +1,5 @@
 <?php
-class VT extends Upload{
+class DB extends Upload{
     const HOST="localhost";
     const USERNAME="root";
     const PASSWORD="";
@@ -208,6 +208,13 @@ class VT extends Upload{
             return true;
         else
             return false;
+    }
+
+    public static function primaryID($tableName){
+        $SQL="SHOW TABLE STATUS FROM ".self::DATABASE." WHERE Name='".$tableName."'";
+        $entity=self::$connection->query($SQL);
+        $result=$entity->fetchAll(PDO::FETCH_ASSOC);
+        var_dump($result[0]["Auto_increment"]);
     }
 
     public static function view($pagename,$error){

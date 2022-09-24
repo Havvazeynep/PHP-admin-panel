@@ -1,34 +1,37 @@
 <?php
 include_once("class/FL.php");
-include_once("class/VT.php");
-/*$result = VT::table("corporate")->select(["corporate.id","corporate.title","corporate.description","categories.category"])
+include_once("class/DB.php");
+/*$result = DB::table("corporate")->select(["corporate.id","corporate.title","corporate.description","categories.category"])
 ->join("categories","category","id")
 ->whereRaw("corporate.description LIKE ?",["%a%"])
-->get();
-$result=VT::table("corporate")
+->get();*/
+$result=DB::table("corporate")
         ->orderBy(["id","DESC"])
         ->first();
-
+/*
 if($result!=false){
     echo $result->title."</br>";
 }*/
-/*$add=VT::table("corporate")->create([
+/*$add=DB::table("corporate")->create([
     "title"=>"Kalite Politikası",
     "description"=>"Kalite Açıklama",
     "category"=>1
 ]);
 
-$update=VT::table("corporate")->where("id",4)->update([
+$update=DB::table("corporate")->where("id",4)->update([
     "title"=>"Güncelleme başlığı",
     "description"=>"Güncel amakale"
 ]);*/
-
-$delete=VT::table("corporate")->where("id",4)->delete();
+/*
+$delete=DB::table("corporate")->where("id",4)->delete();
 
 if($delete)
     echo "Kayıt başarıyla silindi";
 else
     echo "Bir sorun oluştu";
+*/
+
+echo DB::primaryID("categories");
 
 ?>
 
